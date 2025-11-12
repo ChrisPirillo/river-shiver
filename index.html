@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <!-- Basic Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Shiver - An Interactive GLSL Shader Experience</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Experience 'River Shiver,' a mesmerizing interactive GLSL shader art piece. Tweak and control a complex, abstract visual landscape in real-time.">
+    <meta name="keywords" content="GLSL, shader, interactive art, WebGL, generative art, real-time, visualizer, creative coding, abstract">
+    <meta name="author" content="Chris Pirillo">
+    <link rel="canonical" href="https://pirillo.com/arcade/river-shiver.html">
+
+    <!-- Open Graph (OG) Meta Tags for social sharing -->
+    <meta property="og:title" content="River Shiver">
+    <meta property="og:description" content="A mesmerizing interactive GLSL shader art piece. Tweak and control a complex, abstract visual landscape in real-time.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/river-shiver.html">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/river-shiver.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Pirillo's Arcade">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ChrisPirillo">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+    <meta name="twitter:title" content="River Shiver">
+    <meta name="twitter:description" content="A mesmerizing interactive GLSL shader art piece. Tweak and control a complex, abstract visual landscape in real-time.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/river-shiver.png">
+
+    <!-- Performance & Resource Hints -->
+    <!-- Preconnect to critical third-party origins -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap" as="style">
+
+    <!-- Google Fonts - using display=swap for font-display: swap to prevent FOUT/FOIT -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <!-- Load Tailwind CSS - This is render-blocking as required to prevent FOUC and CLS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+    
+    <!-- Critical Inline CSS - This was already here and is correct practice -->
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevent scrolling of the whole page */
+            overflow: hidden;
+            background-color: #111827; /* bg-gray-900 */
+        }
+
+        /* Custom scrollbar for the sidebar */
+        #controls-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #controls-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        #controls-container::-webkit-scrollbar-thumb {
+            background: #06b6d4; /* cyan-600 */
+            border-radius: 10px;
+        }
+        #controls-container::-webkit-scrollbar-thumb:hover {
+            background: #0891b2; /* cyan-700 */
+        }
+
+        /* Custom slider styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        input[type=range]:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #06b6d4; /* cyan-600 */
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(6, 182, 212, 0.7);
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #06b6d4; /* cyan-600 */
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(6, 182, 212, 0.7);
+        }
+
+        /* Main canvas for the shader */
+        #shader-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+    </style>
+
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "url": "https://pirillo.com/arcade/river-shiver.html",
+      "name": "River Shiver",
+      "description": "Experience 'River Shiver,' a mesmerizing interactive GLSL shader art piece by Chris Pirillo. Tweak and control a complex, abstract visual landscape in real-time.",
+      "mainEntity": {
+        "@type": "VisualArtwork",
+        "name": "River Shiver",
+        "author": {
+          "@type": "Person",
+          "name": "Chris Pirillo",
+          "url": "https://chris.pirillo.com"
+        },
+        "image": "https://pirillo.com/arcade/images/river-shiver.png",
+        "description": "An interactive, real-time GLSL shader that generates abstract, flowing 'river' like visuals.",
+        "artform": "Generative Art",
+        "artworkSurface": "WebGL"
+      },
+      "publisher": {
+         "@type": "Person",
+         "name": "Chris Pirillo",
+         "sameAs": "https://twitter.com/ChrisPirillo"
+      }
+    }
+    </script>
+</head>
+<body class="text-white">
+
+    <!-- 
+      Semantic HTML Structure:
+      - <main> wraps the primary content (the canvas).
+      - <nav> wraps the control elements (button and sidebar).
+      - <aside> is used for the sidebar.
+      - These changes are non-visual and do not affect the layout,
+        as all elements are positioned.
+    -->
+
+    <!-- Main Content: The WebGL Canvas -->
+    <main>
+        <canvas id="shader-canvas"></canvas>
+    </main>
+
+    <!-- Navigation/Controls -->
+    <nav aria-label="Shader Controls">
+        <!-- Hamburger Menu Button -->
+        <button id="open-menu-btn" class="fixed top-5 left-5 z-20 p-3 bg-white/10 backdrop-blur-md rounded-lg shadow-lg text-white text-2xl hover:bg-white/20 transition-all duration-200" aria-label="Open Shader Controls" aria-controls="sidebar">
+            <!-- Hamburger Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <title>Open Controls Menu</title>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Slide-out Sidebar (changed from <div> to <aside>) -->
+        <aside id="sidebar" class="fixed top-0 left-0 h-full w-80 max-w-xs z-30 bg-gray-800/80 backdrop-blur-lg shadow-2xl flex flex-col p-6 transform -translate-x-full transition-transform duration-300 ease-in-out">
+            
+            <!-- Sidebar Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Shader Controls</h2>
+                <button id="close-menu-btn" class="text-gray-400 text-3xl hover:text-white transition-colors" aria-label="Close Shader Controls">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Controls Container (scrollable) -->
+            <div id="controls-container" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                
+                <!-- A helper function will populate this area -->
+                
+            </div>
+
+            <!-- Reset Button -->
+            <button id="reset-btn" class="mt-6 w-full bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700 transition-colors duration-200 shadow-md">
+                Reset to Defaults
+            </button>
+        </aside>
+    </nav>
+
+    <!-- 
+      ==================================================================
+      == UNMODIFIED JAVASCRIPT MODULE ==
+      This script is identical to the original to ensure no functional
+      regressions. It is placed at the end of the <body> for optimal
+      loading performance (acts as deferred).
+      ==================================================================
+    -->
+    <script type="module">
+        // --- GLSL Shaders ---
+
+        // Vertex shader: A simple passthrough for a full-screen quad
+        const VS_SOURCE = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        // Fragment shader: Your code, parameterized with uniforms
+        const FS_SOURCE = `
+            precision highp float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            
+            // Our new uniform parameters
+            uniform float u_timeScale;
+            uniform float u_maxSteps;
+            uniform float u_stepScale;
+            uniform float u_shapeWarp;
+            uniform float u_detailScale;
+            uniform float u_structureOffset;
+            uniform float u_hueBase;
+            uniform float u_saturation;
+            uniform float u_brightnessScale;
+            uniform float u_glowFactor;
+            uniform float u_brightnessFalloff;
+
+            // HSV to RGB conversion function
+            vec3 hsv(float h, float s, float v){
+                vec4 t = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+                vec3 p = abs(fract(vec3(h) + t.xyz) * 6.0 - vec3(t.w));
+                return v * mix(vec3(t.x), clamp(p - vec3(t.x), 0.0, 1.0), s);
+            }
+
+            void main() {
+                // Re-map variables from the original one-liner
+                vec2 r = u_resolution;
+                vec2 FC = gl_FragCoord.xy;
+                float t = u_time; // We'll use u_timeScale inside
+                vec4 o = vec4(0.0, 0.0, 0.0, 1.0); // Output color
+
+                // Original shader code, with uniforms
+                // *** FIX: Initialize all variables to prevent undefined behavior ***
+                // Removed 'i' as it will be declared in the loop
+                float e=0.0,R=0.0,s=0.0;
+                vec3 q=vec3(0.0), p=vec3(0.0);
+                
+                // d=vec3(FC.xy/r-.5,.2);
+                vec3 d=vec3(FC.xy/r-.5,.2);
+                
+                // for(q.yz--;i++<99.;){
+                // *** FIX: Move expression out of for-loop init to satisfy GLSL ES 1.0 ***
+                q.yz--;
+                // *** FIX: Changed to a constant-bound for-loop to fix GLSL ES 1.0 compiler error ***
+                // We loop to the max possible value (from the slider) and break early using the uniform.
+                for(float i=0.0; i < 200.0; i++){ // u_maxSteps.max
+                    // Break if we've reached the user-defined limit
+                    if (i >= u_maxSteps) break;
+                    
+                    // o.rgb+=hsv(.6+e,.4,min(e*s*e/.01,.3-e)/9.);
+                    o.rgb+=hsv(u_hueBase+e, u_saturation, min(e*s*e/u_glowFactor, u_brightnessFalloff-e)/u_brightnessScale);
+                    
+                    s=1.;
+                    
+                    // p=q+=d*e*R*.3;
+                    p=q+=d*e*R*u_stepScale;
+                    
+                    // p=vec3(log2(R=length(p))-t*.3,exp(-p.z/R+.5),atan(p.x,p.y)-t*.3)-1.5;
+                    p=vec3(log2(R=length(p))-t*u_timeScale, exp(-p.z/R+.5), atan(p.x,p.y)-t*u_timeScale)-u_structureOffset;
+                    
+                    // for(e=--p.y;s<1e3;s+=s)e+=-abs(dot(cos(p.zxy*s),.2-sin(p*s)))/s*.24;}
+                    // *** FIX: Re-wrote second loop as a constant 10-iteration for-loop ***
+                    // *** FIX: Removed comment with 'while' in it to fix JS SyntaxError ***
+                    // (1, 2, 4, 8, 16, 32, 64, 128, 256, 512) is just 10 iterations.
+                    e = --p.y;
+                    for(int j=0; j < 10; j++) {
+                        e += -abs(dot(cos(p.zxy*s),u_shapeWarp-sin(p*s)))/s*u_detailScale;
+                        s += s;
+                    }
+                }
+
+                gl_FragColor = o;
+            }
+        `;
+
+        // --- Shader Parameters Definition ---
+        const shaderParams = {
+            timeScale: { label: 'Time Scale', min: 0.0, max: 1.0, step: 0.01, value: 0.3 },
+            maxSteps: { label: 'Max Steps', min: 20, max: 50, step: 1, value: 50 },
+            stepScale: { label: 'Ray Step Scale', min: 0.05, max: 1.0, step: 0.01, value: 0.3 },
+            structureOffset: { label: 'Structure Offset', min: -5.0, max: 5.0, step: 0.1, value: 1.5 },
+            shapeWarp: { label: 'Shape Warp', min: -1.0, max: 1.0, step: 0.01, value: 0.2 },
+            detailScale: { label: 'Detail Scale', min: 0.0, max: 1.0, step: 0.01, value: 0.24 },
+            hueBase: { label: 'Base Hue', min: 0.0, max: 1.0, step: 0.01, value: 0.6 },
+            saturation: { label: 'Saturation', min: 0.0, max: 1.0, step: 0.01, value: 0.4 },
+            brightnessScale: { label: 'Brightness Scale', min: 1.0, max: 20.0, step: 0.1, value: 9.0 },
+            brightnessFalloff: { label: 'Brightness Falloff', min: 0.0, max: 1.0, step: 0.01, value: 0.3 },
+            glowFactor: { label: 'Glow Factor', min: 0.001, max: 0.1, step: 0.001, value: 0.01 }
+        };
+
+        // --- Global Variables ---
+        let gl;
+        let shaderProgram;
+        let positionBuffer;
+        let uniformLocations = {};
+        let currentParams = {};
+        let startTime;
+
+        // --- Main Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initGL();
+            initUI();
+            if (gl) {
+                startTime = Date.now();
+                requestAnimationFrame(draw);
+            }
+        });
+
+        // --- WebGL Initialization ---
+        function initGL() {
+            const canvas = document.getElementById('shader-canvas');
+            gl = canvas.getContext('webgl');
+            if (!gl) {
+                console.error("WebGL not supported!");
+                document.body.innerHTML = '<div class="w-screen h-screen flex items-center justify-center bg-red-900 text-white p-10">Error: WebGL is not supported on your browser.</div>';
+                return;
+            }
+
+            const vertexShader = createShader(gl, gl.VERTEX_SHADER, VS_SOURCE);
+            const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE);
+            shaderProgram = createProgram(gl, vertexShader, fragmentShader);
+
+            if (!shaderProgram) return;
+
+            // Get uniform locations
+            uniformLocations.u_resolution = gl.getUniformLocation(shaderProgram, 'u_resolution');
+            uniformLocations.u_time = gl.getUniformLocation(shaderProgram, 'u_time');
+            for (const key in shaderParams) {
+                // *** FIX: Corrected typo 'u_'H + key to 'u_' + key ***
+                uniformLocations['u_' + key] = gl.getUniformLocation(shaderProgram, 'u_' + key);
+            }
+
+            // Create a buffer for a full-screen quad
+            positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positions = [-1, -1, 1, -1, -1, 1, 1, 1];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            gl.useProgram(shaderProgram);
+        }
+
+        // --- UI Initialization ---
+        function initUI() {
+            const openBtn = document.getElementById('open-menu-btn');
+            const closeBtn = document.getElementById('close-menu-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const sidebar = document.getElementById('sidebar');
+            const controlsContainer = document.getElementById('controls-container');
+
+            // Toggle sidebar
+            openBtn.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
+            closeBtn.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
+
+            // Create sliders
+            for (const key in shaderParams) {
+                const param = shaderParams[key];
+                currentParams[key] = param.value; // Initialize current params
+
+                const controlGroup = document.createElement('div');
+                controlGroup.className = 'control-group';
+
+                const labelRow = document.createElement('div');
+                labelRow.className = 'flex justify-between text-sm font-medium text-gray-300 mb-2';
+                
+                const label = document.createElement('label');
+                label.htmlFor = key;
+                label.textContent = param.label;
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.id = `${key}-value`;
+                valueSpan.className = 'text-white font-mono';
+                valueSpan.textContent = Number(param.value).toFixed(param.step < 0.01 ? 3 : (param.step < 0.1 ? 2 : (param.step < 1 ? 1 : 0)));
+                
+                labelRow.appendChild(label);
+                labelRow.appendChild(valueSpan);
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.id = key;
+                slider.min = param.min;
+                slider.max = param.max;
+                slider.step = param.step;
+                slider.value = param.value;
+                
+                // Add event listener
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    currentParams[key] = value;
+                    valueSpan.textContent = value.toFixed(param.step < 0.01 ? 3 : (param.step < 0.1 ? 2 : (param.step < 1 ? 1 : 0)));
+                });
+
+                controlGroup.appendChild(labelRow);
+                controlGroup.appendChild(slider);
+                controlsContainer.appendChild(controlGroup);
+            }
+            
+            // Reset button logic
+            resetBtn.addEventListener('click', resetParams);
+        }
+        
+        function resetParams() {
+             for (const key in shaderParams) {
+                const param = shaderParams[key];
+                currentParams[key] = param.value;
+                
+                // Update UI
+                const slider = document.getElementById(key);
+                const valueSpan = document.getElementById(`${key}-value`);
+                
+                if (slider) slider.value = param.value;
+                if (valueSpan) valueSpan.textContent = Number(param.value).toFixed(param.step < 0.01 ? 3 : (param.step < 0.1 ? 2 : (param.step < 1 ? 1 : 0)));
+            }
+        }
+
+        // --- Render Loop ---
+        function draw(timestamp) {
+            if (!gl || !shaderProgram) { // Added a check for shaderProgram
+                // Don't try to draw if initialization failed
+                return;
+            }
+            
+            // Resize canvas to match display size
+            resizeCanvas(gl.canvas);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+            // Clear the canvas
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // Tell WebGL to use our program
+            gl.useProgram(shaderProgram);
+
+            // Set up the position buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'a_position');
+            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(positionAttributeLocation);
+
+            // Set uniforms
+            const timeInSeconds = (Date.now() - startTime) * 0.001;
+            gl.uniform1f(uniformLocations.u_time, timeInSeconds);
+            gl.uniform2f(uniformLocations.u_resolution, gl.canvas.width, gl.canvas.height);
+
+            // Set all dynamic parameters
+            for (const key in currentParams) {
+                gl.uniform1f(uniformLocations['u_' + key], currentParams[key]);
+            }
+
+            // Draw the quad
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            // Loop
+            requestAnimationFrame(draw);
+        }
+
+        // --- WebGL Helper Functions ---
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Error compiling shader:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            // Check if shaders are valid before attaching
+            if (!vertexShader || !fragmentShader) {
+                console.error("Invalid shader object passed to createProgram.");
+                return null;
+            }
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Error linking program:', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+                return null;
+            }
+            return program;
+        }
+        
+        function resizeCanvas(canvas) {
+            const displayWidth  = canvas.clientWidth;
+            const displayHeight = canvas.clientHeight;
+
+            if (canvas.width  !== displayWidth || canvas.height !== displayHeight) {
+                canvas.width  = displayWidth;
+                canvas.height = displayHeight;
+                return true;
+            }
+            return false;
+        }
+    </script>
+
+</body>
+</html>
